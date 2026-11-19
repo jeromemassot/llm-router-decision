@@ -1,0 +1,10 @@
+# Virtual environment & caches
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Secrets & local overrides
+.env
+.env.local
+configs/custom_saved_*.json

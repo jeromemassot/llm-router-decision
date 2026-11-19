@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Decision-Grounded LLM Router Studio · Gemini Decision 1</title>
+  <meta
+    name="description"
+    content="Skill-driven multi-decision LLM router powered by Google's Gemini Decision 1 API (gemini-decision-1). Build a custom LLM router from plain-text feedback and visualize every routing step."
+  />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="/styles/index.css" />
+</head>
+<body>
+  <div id="app-shell" class="app-shell">
+    <!-- Top Studio Header -->
+    <header class="topbar" id="studio-topbar">
+      <div class="topbar-brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="5" cy="12" r="2.5" />
+            <path d="M7.5 12h4l3.5-6h4" />
+            <path d="M11.5 12l3.5 6h4" />
+            <circle cx="20" cy="6" r="2" />
+            <circle cx="20" cy="18" r="2" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">Decision-Grounded LLM Router</h1>
+          <p class="brand-subtitle">Powered by <code>gemini-decision-1</code> · Custom Multi-Decision Routing</p>
+        </div>
+      </div>
+
+      <div class="topbar-controls">
+        <div class="control-group">
+          <span class="control-label">Call Strategy</span>
+          <div class="segmented-toggle" role="group" aria-label="Decision API Call Strategy">
+            <button type="button" id="mode-staged-btn" class="seg-btn active" data-exec-mode="staged">
+              Staged Calls
+            </button>
+            <button type="button" id="mode-batched-btn" class="seg-btn" data-exec-mode="batched">
+              Single-Pass
+            </button>
+          </div>
+        </div>
+
+        <div class="telemetry-strip" id="header-telemetry" aria-live="polite">
+          <div class="telemetry-item">
+            <span class="telemetry-k">Routed</span>
+            <span class="telemetry-v" id="stat-routed">0</span>
+          </div>
+          <div class="telemetry-item">
+            <span class="telemetry-k">Saved vs Ceiling</span>
+            <span class="telemetry-v positive" id="stat-savings">—</span>
+          </div>
+        </div>
+
+        <button type="button" id="reset-session-btn" class="ghost-btn small-btn" title="Clear active router and start a fresh blank session">
+          New Session
+        </button>
+
+        <button type="button" id="api-key-btn" class="api-status-btn" title="Configure GEMINI_API_KEY for Live gemini-decision-1 calls">
+          <span class="status-dot" id="api-status-dot"></span>
+          <span id="api-status-label">Checking API...</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Unified Multi-Tab Panel -->
+    <main class="main-panel">
+      <section class="workspace-pane">
+        <!-- 3-Step Multi-Tab Navigation -->
+        <nav class="workspace-tabs" role="tablist" aria-label="Router Workflow Tabs">
+          <button
+            type="button"
+            role="tab"
+            id="tab-btn-architect"
+            class="tab-btn active"
+            aria-selected="true"
+            data-tab="architect"
+          >
+            1. Router Architect Agent
+          </button>
+          <button
+            type="button"
+            role="tab"
+            id="tab-btn-pipeline"
+            class="tab-btn"
+            aria-selected="false"
+            data-tab="pipeline"
+          >
+            2. Step-by-Step Pipeline Trace
+          </button>
+          <button
+            type="button"
+            role="tab"
+            id="tab-btn-workbench"
+            class="tab-btn"
+            aria-selected="false"
+            data-tab="workbench"
+          >
+            3. Topics, Weights &amp; Thresholds
+          </button>
+        </nav>
+
+        <!-- TAB 1: Router Architect Agent -->
+        <div id="tab-panel-architect" class="tab-panel active" role="tabpanel">
+          <div class="architect-tab-layout">
+            <!-- Architect Conversation Card -->
+            <div class="architect-card" aria-label="Skill-Driven Router Architect Agent">
+              <div class="pane-header">
+                <div>
+                  <h2 class="pane-title">Router Architect Agent</h2>
+                  <p class="pane-caption">Translate plain-text priorities &amp; critiques into <code>gemini-decision-1</code> calls</p>
+                </div>
+                <div class="badge-row">
+                  <button type="button" id="discover-btn" class="ghost-btn small-btn" title="Ask the agent to interview you about topics & thresholds">
+                    Interview Me
+                  </button>
+                </div>
+              </div>
+
+              <div class="skills-bar" id="skills-bar" aria-label="Loaded Agent Skills"></div>
+
+              <div class="chat-stream" id="architect-chat-stream" role="log" aria-live="polite"></div>
+
+              <form id="architect-form" class="architect-form">
+                <label for="architect-input" class="sr-only">Plain-text router feedback or priorities</label>
+                <textarea
+                  id="architect-input"
+                  class="architect-textarea"
+                  rows="3"
+                  placeholder="Describe the topics, thresholds, and routing trade-offs that matter for your tasks..."
+                ></textarea>
+                <div class="architect-form-footer">
+                  <span class="form-hint">Compiles your plain-text feedback into <code>noul</code>, <code>choice</code>, &amp; <code>score</code> Decision API calls</span>
+                  <button type="submit" id="architect-send-btn" class="primary-btn">
+                    Send to Architect
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Live Active Router Blueprint Summary -->
+            <aside class="blueprint-summary-card" id="architect-blueprint-root" aria-label="Active Router Blueprint"></aside>
+          </div>
+        </div>
+
+        <!-- TAB 2: Step-by-Step Pipeline Visualizer -->
+        <div id="tab-panel-pipeline" class="tab-panel" role="tabpanel" hidden>
+          <!-- Prompt Composer Card -->
+          <div class="composer-card">
+            <div class="composer-top">
+              <span class="section-eyebrow">Task Input</span>
+              <span class="zero-token-note">
+                <code>gemini-decision-1</code> bills <strong>0 output tokens</strong> ($0.10 / 1M input)
+              </span>
+            </div>
+            <div class="composer-row">
+              <label for="route-prompt-input" class="sr-only">Prompt to route</label>
+              <textarea
+                id="route-prompt-input"
+                class="prompt-textarea"
+                rows="2"
+                placeholder="Enter a task prompt to evaluate through your custom Decision-grounded router..."
+              ></textarea>
+              <button type="button" id="run-route-btn" class="primary-btn route-cta-btn">
+                Evaluate &amp; Route
+              </button>
+            </div>
+          </div>
+
+          <!-- Dynamic Pipeline Trace Root -->
+          <div id="pipeline-trace-root" class="pipeline-trace-root"></div>
+        </div>
+
+        <!-- TAB 3: Topics, Weights & Thresholds Workbench -->
+        <div id="tab-panel-workbench" class="tab-panel" role="tabpanel" hidden>
+          <div id="workbench-root"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Session API Key Modal -->
+  <div id="api-key-modal" class="modal-backdrop" hidden>
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-header">
+        <h2 id="modal-title" class="modal-title">Configure Gemini Developer API Key</h2>
+        <button type="button" id="modal-close-btn" class="icon-close-btn" aria-label="Close modal">&times;</button>
+      </div>
+      <p class="modal-desc">
+        Provide a Google AI Studio <code>GEMINI_API_KEY</code> to run live <code>v1beta</code> calls against
+        <code>gemini-decision-1</code> and the candidate Gemini models. Held only in local server memory for this session.
+      </p>
+      <form id="api-key-form" class="modal-form">
+        <label for="api-key-input" class="control-label">GEMINI_API_KEY</label>
+        <input
+          type="password"
+          id="api-key-input"
+          class="text-input"
+          placeholder="AIzaSy..."
+          autocomplete="off"
+        />
+        <div class="modal-actions">
+          <button type="button" id="clear-api-key-btn" class="ghost-btn">Clear Key</button>
+          <button type="submit" id="save-api-key-btn" class="primary-btn">Save Key for Session</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
